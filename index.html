@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo das Cartas Juninas Misteriosas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos Globais e de Festa Junina */
+        body {
+            font-family: 'Luckiest Guy', cursive; /* Fonte mais festiva */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            /* Fundo noturno */
+            background: linear-gradient(to bottom, #1a0a2a 0%, #3a1a5a 50%, #1a0a2a 100%);
+            color: #f7e099; /* Cor do texto principal */
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow: auto; /* Para garantir que as bandeirinhas não causem scroll indesejado */
+            position: relative; /* Para as bandeirinhas posicionadas absolutamente */
+        }
+
+        /* Bandeirinhas - Estilo de Festa Junina */
+        .flags-container {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            pointer-events: none; /* Impede que as bandeirinhas atrapalhem o clique */
+            z-index: 10; /* Garante que fiquem acima de outros elementos, mas abaixo do h1 */
+            height: 100px; /* Altura da área das bandeirinhas */
+        }
+
+        .flag {
+            width: 50px;
+            height: 60px;
+            background-color: #ff6f61; /* Cor da bandeirinha */
+            clip-path: polygon(0% 0%, 100% 0%, 75% 50%, 100% 100%, 0% 100%); /* Formato da bandeirinha */
+            animation: swing 3s infinite ease-in-out alternate;
+            margin: 0 10px;
+            opacity: 0.9;
+        }
+        .flag:nth-child(even) { background-color: #ffcc5c; } /* Cores alternadas */
+        .flag:nth-child(3n) { background-color: #6a0572; }
+        .flag:nth-child(4n) { background-color: #88d8b0; }
+
+        @keyframes swing {
+            0% { transform: rotateZ(0deg) translateY(0); }
+            50% { transform: rotateZ(5deg) translateY(-5px); }
+            100% { transform: rotateZ(0deg) translateY(0); }
+        }
+
+        h1 {
+            color: #ffe082; /* Título mais brilhante */
+            margin: 40px; /* Mais espaço para o título */
+            text-align: center;
+            font-size: 2.5em; /* Título maior */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 1); /* Sombra para destacar */
+            z-index: 1; /* Garante que o título fique acima das bandeirinhas */
+        }
+        
+        h2 {
+            color: #ffe082; /* Título mais brilhante */
+            margin: 40px; /* Mais espaço para o título */
+            text-align: center;
+            font-size: 1.5em; /* Título maior */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 1); /* Sombra para destacar */
+            z-index: 1; /* Garante que o título fique acima das bandeirinhas */
+        }
+
+        .card-container {
+            display: flex;
+            gap: 3vw; /* Espaço entre as cartas */
+            justify-content: center;
+            margin-bottom: 40px; /* Mais espaço para o botão */
+            width: 90%;
+            max-width: 960px; /* Largura máxima para o container */
+            flex-grow: 1; /* Permite que o container ocupe espaço disponível */
+            align-items: center; /* Centraliza verticalmente se necessário */
+        }
+
+        .card {
+            width: 25vw; /* Tamanho da carta, ajuste conforme preferir */
+            height: 25vw;
+            min-width: 220px; /* Largura mínima para evitar que fiquem muito pequenas */
+            min-height: 300px; /* Altura mínima */
+            background-color: #a0522d; /* Cor marrom-avermelhada para a carta (estilo madeira/couro) */
+            border-radius: 15px; /* Bordas mais arredondadas */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5em; /* Tamanho do texto "Carta X" */
+            color: #f7e099; /* Cor do texto "Carta X" */
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); /* Sombra mais forte */
+            transition: transform 0.4s ease, background-color 0.4s ease;
+            position: relative;
+            perspective: 1000px; /* Para o efeito 3D da virada */
+            transform-style: preserve-3d; /* Permite a rotação 3D dos filhos */
+            overflow: hidden; /* Para garantir que o conteúdo não vaze */
+        }
+        .card:hover:not(.revealed):not(.disabled) { /* Efeito hover apenas se não estiver revelada ou desabilitada */
+            transform: translateY(-10px) rotateZ(-2deg); /* Efeito mais dinâmico */
+        }
+        .card.revealed {
+            background-color: #4CAF50; /* Verde vibrante ao revelar */
+            cursor: default;
+        }
+        .card.disabled {
+            cursor: not-allowed;
+            opacity: 0.5; /* Mais opaco quando desabilitado */
+            pointer-events: none;
+        }
+
+        /* Face da Carta (Frente) */
+        .card-front {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            background-color: #8b4513; /* Marrom mais escuro para a frente da carta */
+            border-radius: 15px;
+            position: absolute;
+            backface-visibility: hidden; /* Esconde o verso ao girar */
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.6s ease;
+            color: #ffe082; /* Cor do texto da frente */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+        }
+        .card.revealed .card-front {
+            transform: rotateY(180deg);
+            opacity: 0;
+        }
+
+        /* Conteúdo da Carta (Verso) */
+        .card-content {
+            padding: 10px; /* Ajuste o padding para a imagem */
+            background-color: #fce4ec; /* Fundo mais claro e festivo para o conteúdo */
+            border-radius: 12px;
+            overflow: hidden; /* Garante que a imagem não vaze */
+            display: flex; /* Começa oculto no JS */
+            justify-content: center; /* Centraliza a imagem */
+            align-items: center; /* Centraliza a imagem */
+            opacity: 0;
+            transform: rotateY(-180deg); /* Virado para trás inicialmente */
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.6s ease;
+            position: absolute;
+            width: calc(100% - 20px); /* Ajuste baseado no novo padding */
+            height: calc(100% - 20px); /* Ajuste baseado no novo padding */
+            backface-visibility: hidden; /* Esconde o verso ao girar */
+        }
+        .card.revealed .card-content {
+            opacity: 1;
+            transform: rotateY(0deg); /* Gira para a frente */
+        }
+
+        /* Estilo para a imagem dentro da carta */
+        .card-content img {
+            max-width: 100%; /* Garante que a imagem não exceda a largura da carta */
+            max-height: 100%; /* Garante que a imagem não exceda a altura da carta */
+            object-fit: contain; /* Redimensiona a imagem para caber, mantendo a proporção */
+            display: block; /* Remove espaço extra abaixo da imagem */
+        }
+
+        .reset-button {
+            padding: 15px 30px; /* Botão ainda maior */
+            font-size: 1.2em;
+            background-color: #8b0000; /* Vermelho escuro para o botão */
+            color: white;
+            border: none;
+            border-radius: 8px; /* Bordas mais arredondadas */
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 40px;
+            font-family: 'Luckiest Guy', cursive; /* Fonte do título também no botão */
+            letter-spacing: 1px; /* Espaçamento entre letras */
+        }
+        .reset-button:hover {
+            background-color: #a00000; /* Mais claro no hover */
+            transform: translateY(-2px);
+        }
+
+        /* Media queries para responsividade */
+        @media (max-width: 900px) {
+            .card-container {
+                gap: 2vw;
+            }
+            .card {
+                width: 28vw;
+                height: 38vw;
+                min-width: 180px;
+                min-height: 250px;
+                font-size: 2em;
+            }
+            .card-content {
+                padding: 10px;
+                width: calc(100% - 20px);
+                height: calc(100% - 20px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            h1 {
+                font-size: 1em;
+            }
+            .card-container {
+                flex-direction: column; /* Cartas empilham em telas menores */
+                gap: 30px; /* Espaço maior entre cartas empilhadas */
+                width: 80%; /* Mais estreito para mobile */
+            }
+            .card {
+                width: 60vw; /* Uma carta mais larga em telas menores */
+                height: 80vw;
+                min-width: unset; /* Remove min-width para mobile */
+                min-height: unset;
+                font-size: 2.2em;
+            }
+            .card-content {
+                padding: 15px; /* Ajuste o padding para a imagem */
+                width: calc(100% - 30px);
+                height: calc(100% - 30px);
+            }
+            .reset-button {
+                font-size: 1em;
+                padding: 10px 20px;
+            }
+            .flags-container {
+                height: 80px;
+            }
+            .flag {
+                width: 40px;
+                height: 50px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            h2 {
+                font-size: 0.8em;
+            }
+            .card {
+                width: 75vw;
+                height: 95vw;
+                font-size: 2em;
+            }
+            .card-content {
+                padding: 10px;
+                width: calc(100% - 20px);
+                height: calc(100% - 20px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="flags-container">
+        <div class="flag"></div>
+        <div class="flag"></div>
+        <div class="flag"></div>
+        <div class="flag"></div>
+        <div class="flag"></div>
+        <div class="flag"></div>
+        <div class="flag"></div>
+    </div>
+    <h1>Adivinhe a Sorte da Noite Junina!</h1>
+    <h2>Bem vindo ao nosso jogo!
+
+Esse ano a gente teve uma ideia para animar, ainda mais, nossa festa.
+
+A ideia é a seguinte, você está em um jogo, essa carta é sua missão. 
+
+Se você fizer a missão e ninguém perceber, você ganha os pontos, mas se alguém te pegar no flagra, você está eliminado.
+
+Mas não se apegue aos pontos, a ideia é aumentar nossa comunhão e se divertir.
+
+Fique atento, outras pessoas também estão fazendo missão, se perceber algo estranho, faça a identificação. Mas com cautela, Você só tem direito a 3 tentativas</h2>
+    <div class="card-container">
+        <div class="card" id="card1">
+            <div class="card-front">Carta 1</div>
+            <div class="card-content"><img class="card-image" src="" alt="Imagem da carta"></div>
+        </div>
+        <div class="card" id="card2">
+            <div class="card-front">Carta 2</div>
+            <div class="card-content"><img class="card-image" src="" alt="Imagem da carta"></div>
+        </div>
+        <div class="card" id="card3">
+            <div class="card-front">Carta 3</div>
+            <div class="card-content"><img class="card-image" src="" alt="Imagem da carta"></div>
+        </div>
+    </div>
+    <button class="reset-button" onclick="resetGame()">Acender a Fogueira Novamente!</button>
+
+    <script>
+        // Nomes dos arquivos de imagem que você tem na pasta "Jogo cartas social"
+        // Altere esta lista para corresponder aos nomes exatos dos seus arquivos.
+        const imageFilenames = [
+            "1.png",       // Exemplo: se você tem uma imagem fogueira.png
+            "2.png",          // Exemplo: se você tem uma imagem milho.png
+            "3.png",   // Exemplo: se você tem uma imagem bandeirinhas.png
+            "4.png",        // Adicione seus próprios arquivos aqui
+            "5.png",
+            "6.png",
+            "7.png",
+            "8.png",
+            "9.png",
+            "10.png",
+            "11.png",
+            "12.png",
+            "13.png",
+            "14.png",
+            "15.png",
+            "16.png",
+            "17.png",
+            "18.png",
+            "19.png",
+            "20.png",
+            "21.png",
+            "22.png",
+            "23.png",
+            "24.png",
+            "25.png",
+            "26.png",
+            "27.png",
+            "28.png"
+            // Adicione mais nomes de arquivos conforme necessário
+        ];
+
+        // Mapeia os nomes dos arquivos para o formato { src: path, alt: name }
+        // Isso cria um array com os caminhos corretos para as imagens na pasta "Jogo cartas social"
+        const initialImages = imageFilenames.map(filename => ({
+            src: `Jogo cartas social/${filename}`,
+            // Gera um texto alternativo a partir do nome do arquivo (ex: "fogueira.png" vira "fogueira")
+            alt: filename.replace(/\.(png|jpg|jpeg|gif|webp)$/i, '').replace(/[-_]/g, ' ')
+        }));
+
+        let availableImages = [];
+        let cardSelectedThisRound = false;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function resetGame() {
+            availableImages = [...initialImages];
+            shuffleArray(availableImages);
+            cardSelectedThisRound = false;
+
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card) => {
+                card.classList.remove('revealed', 'disabled');
+                
+                const cardFront = card.querySelector('.card-front');
+                if (cardFront) {
+                    cardFront.style.opacity = '1';
+                    cardFront.style.transform = 'rotateY(0deg)';
+                }
+                const cardContent = card.querySelector('.card-content');
+                const cardImage = cardContent.querySelector('.card-image'); // Seleciona a imagem
+                
+                if (cardContent && cardImage) { // Verifica se cardImage existe
+                    cardImage.src = ''; // Limpa a imagem
+                    cardImage.alt = 'Imagem da carta'; // Reseta o alt
+                    cardContent.style.opacity = '0';
+                    cardContent.style.transform = 'rotateY(-180deg)';
+                    // Esconde com display none após a transição para garantir que não interaja
+                    setTimeout(() => { cardContent.style.display = 'none'; }, 600); // Tempo da transição CSS
+                }
+
+                card.style.backgroundColor = '#a0522d'; // Volta a cor junina original
+                card.style.cursor = 'pointer';
+                card.onclick = () => revealCard(card);
+            });
+        }
+
+        function revealCard(cardElement) {
+            if (cardSelectedThisRound || cardElement.classList.contains('revealed') || availableImages.length === 0) {
+                return;
+            }
+
+            cardSelectedThisRound = true;
+
+            const imageIndex = Math.floor(Math.random() * availableImages.length);
+            const revealedImage = availableImages.splice(imageIndex, 1)[0]; // Remove a imagem do array
+
+            cardElement.classList.add('revealed');
+
+            const contentDiv = cardElement.querySelector('.card-content');
+            const cardImage = contentDiv.querySelector('.card-image'); // Seleciona a imagem
+            
+            if (cardImage) { // Verifica se cardImage existe antes de tentar manipulá-lo
+                cardImage.src = revealedImage.src; // Define a URL da imagem
+                cardImage.alt = revealedImage.alt; // Define o texto alternativo
+            }
+
+            contentDiv.style.display = 'flex'; // Torna o display flexível imediatamente
+
+            // Pequeno atraso para garantir que o display: flex seja aplicado antes da transição
+            setTimeout(() => {
+                contentDiv.style.opacity = '1';
+                contentDiv.style.transform = 'rotateY(0deg)';
+            }, 10); // Atraso mínimo
+
+            cardElement.style.backgroundColor = '#4CAF50'; // Muda a cor para o verde vibrante
+            cardElement.style.cursor = 'default';
+
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                if (card !== cardElement) {
+                    card.classList.add('disabled');
+                }
+            });
+        }
+
+        // Remove o href do botão e ajusta para uma função JS
+        document.querySelector('.reset-button').removeAttribute('href');
+        document.querySelector('.reset-button').onclick = resetGame;
+
+        document.addEventListener('DOMContentLoaded', resetGame);
+    </script>
+</body>
+</html>
