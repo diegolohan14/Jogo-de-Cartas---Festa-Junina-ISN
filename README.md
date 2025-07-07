@@ -32,7 +32,7 @@ O principal objetivo é **aumentar a comunhão e a diversão** entre os particip
 
 ## 🚀 Como Jogar
 
-1.  **Acesse o Jogo:** Abra o arquivo `index.html` em seu navegador.
+1.  **Acesse o Jogo:** Abra o link do jogo no tópico, Link do Site, localizado acima.
 2.  **Leia as Instruções:** O título e a descrição inicial explicam as regras básicas do jogo.
 3.  **Escolha sua Carta:** Clique em uma das três cartas disponíveis. Ao clicar, a carta virará, revelando sua missão secreta (representada por uma imagem).
 4.  **Cumpra a Missão:** Siga a instrução da imagem sem chamar muita atenção\!
